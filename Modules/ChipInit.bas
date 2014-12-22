@@ -103,11 +103,11 @@ On Error GoTo ErrHandler:
     For Each Module In Modules ' Get all Chip* modules
         If Module.Name Like "Chip*" Then
             If Module.Name <> "ChipInit" Then ' Ignore this module
-                If DoesModuleExists(Module.Name) Then
-                    DeleteModule Module.Name
-                    'Debug.Print "+- " & Module.Name & "(Updated)"
+                If DoesModuleExists(Module.Name, CurBook) Then
+                    DeleteModule Module.Name, CurBook
+                    Debug.Print "+- " & Module.Name & "(Updated)"
                 Else
-                    'Debug.Print "++ " & Module.Name
+                    Debug.Print "++ " & Module.Name
                 End If
             
                 TempPath = "~" & Format(Now(), "yyyymmddhhmmss") & "mod"
@@ -166,16 +166,17 @@ End Sub
 
 '# Removes a module whether it exists or not
 '# Used in making sure there are no duplicate modules
-Public Sub DeleteModule(ModuleName As String)
+Public Sub DeleteModule(ModuleName As String, Book As Workbook)
 On Error Resume Next
     Dim CurProj As VBProject, Module As VBComponent
-    Set CurProj = ActiveWorkbook.VBProject
+    Set CurProj = Book.VBProject
     Set Module = CurProj.VBComponents(ModuleName)
     CurProj.VBComponents.Remove Module
+    DoEvents
 End Sub
 
 '# Checks if an module exists
-Public Function DoesModuleExists(ModuleName As String) As Boolean
+Public Function DoesModuleExists(ModuleName As String, Book As Workbook) As Boolean
 On Error Resume Next
     DoesModuleExists = False
     DoesModuleExists = Not ActiveWorkbook.VBProject.VBComponents(ModuleName) Is Nothing  ' This fails if the module does not exists thus defaulting to False
