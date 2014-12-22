@@ -75,39 +75,43 @@ End Sub
 '# This copies the modules from the Chip workbook
 '# The last core function
 '@ Exception: Propagate
-Private Sub InstallChip(ChipBookPath As String)
+Private Sub InstallChip(ChipBookPath As String, _
+        Optional IgnoreDepedencyCheck As Boolean = False, _
+        Optional Verbose As Boolean = True)
     ' Check depedencies first, we are going to need those libraries to proceed.
     Dim Dependencies As Variant
     Dependencies = Split(DEPENDENCY_LIST, ";")
-    Debug.Print "Checking dependencies"
-    If Not CheckDependencies(Dependencies) Then
-        Debug.Print "One or more of the depedencies are not included. Make sure they are and installing again."
-        Debug.Print "Required References:"
+    If Verbose Then Debug.Print "Checking dependencies"
+    If Not IgnoreDepedencyCheck And Not CheckDependencies(Dependencies) Then
+        If Verbose Then Debug.Print "One or more of the depedencies are not included. Make sure they are and installing again."
+        If Verbose Then Debug.Print "Required References:"
         For Each Depedency In Dependencies
-            Debug.Print "** " & Depedency
+            If Verbose Then Debug.Print "# " & Depedency
         Next
         Err.Raise Err.Number
+    Else
+        If Verbose Then Debug.Print "** Ignoring depedency check"
     End If
     
     ' Get all the modules from the Chip workbook
 On Error GoTo ErrHandler:
     Dim CurBook As Workbook, ChipBook As Workbook, CurProj As VBProject
     Dim Modules As Variant, Module As Variant, TempPath As String, NewModule As VBComponent
-    Debug.Print "Opening Chip book"
+    If Verbose Then Debug.Print "Opening Chip book"
     Set CurBook = ActiveWorkbook
     Set CurProj = CurBook.VBProject
     Set ChipBook = Workbooks.Open(ChipBookPath, ReadOnly:=True)
     
-    Debug.Print "Installing modules:"
-    Modules = ListWorkbookModules(ChipBook)
+    If Verbose Then Debug.Print "Installing modules:"
+    Modules = ListWorkbookModuleObjects(ChipBook)
     For Each Module In Modules ' Get all Chip* modules
         If Module.Name Like "Chip*" Then
             If Module.Name <> "ChipInit" Then ' Ignore this module
-                If DoesModuleExists(Module.Name, CurBook) Then
+                If HasModule(Module.Name, CurBook) Then
                     DeleteModule Module.Name, CurBook
-                    Debug.Print "+- " & Module.Name & "(Updated)"
+                    If Verbose Then Debug.Print "+- " & Module.Name & "(Updated)"
                 Else
-                    Debug.Print "++ " & Module.Name
+                    If Verbose Then Debug.Print "++ " & Module.Name
                 End If
             
                 TempPath = "~" & Format(Now(), "yyyymmddhhmmss") & "mod"
@@ -121,12 +125,12 @@ On Error GoTo ErrHandler:
     Next
 ErrHandler:
     If Err.Number <> 0 Then
-        Debug.Print _
+        If Verbose Then Debug.Print _
             "Whoops! There was an error using the Chip book. " & _
             "Make sure the conditions are good for opening a workbook"
     End If
 CloseBook:
-    Debug.Print "Closing Chip book"
+    If Verbose Then Debug.Print "Closing Chip book"
     DoEvents
     ChipBook.Close SaveChanges:=False
     Exit Sub
@@ -173,19 +177,21 @@ On Error Resume Next
     Set Module = CurProj.VBComponents(ModuleName)
     CurProj.VBComponents.Remove Module
     DoEvents
+    Err.Clear
 End Sub
 
 '# Checks if an module exists
-Public Function DoesModuleExists(ModuleName As String, Book As Workbook) As Boolean
+Public Function HasModule(ModuleName As String, Book As Workbook) As Boolean
 On Error Resume Next
-    DoesModuleExists = False
-    DoesModuleExists = Not ActiveWorkbook.VBProject.VBComponents(ModuleName) Is Nothing  ' This fails if the module does not exists thus defaulting to False
+    HasModule = False
+    HasModule = Not ActiveWorkbook.VBProject.VBComponents(ModuleName) Is Nothing  ' This fails if the module does not exists thus defaulting to False
+    Err.Clear
 End Function
 
 '# Lists the modules of an workbook
 '# Primarily used to get all Chip modules
 '@ Return: An array of VB Components
-Public Function ListWorkbookModules(Book As Workbook)
+Public Function ListWorkbookModuleObjects(Book As Workbook) As Variant
     Dim Comp As VBComponent, Modules As Variant, Index As Long
     Modules = Array()
     ReDim Modules(0 To Book.VBProject.VBComponents.Count - 1)
@@ -193,9 +199,8 @@ Public Function ListWorkbookModules(Book As Workbook)
         Set Modules(Index) = Comp
         Index = Index + 1
     Next
-    ListWorkbookModules = Modules
+    ListWorkbookModuleObjects = Modules
 End Function
-
 
 '# This browses a file using the Open File Dialog
 '# Primarily used to open a macro enabled file
@@ -277,4 +282,38 @@ Public Function ListProjectReferences() As Variant
     
     ReDim Preserve References(0 To ReferenceLength - 1)
     ListProjectReferences = References
+End Function
+
+'# This returns an array of project references, the objects themselves for use
+'# This is used for setting up the test workbook to have the correct references
+'@ Return: A zero-based array of references
+Public Function ListProjectReferenceObjects() As Variant
+    Dim VBProj As VBIDE.VBProject
+    Set VBProj = Application.VBE.ActiveVBProject
+    
+    Dim ReferenceLength As Integer, Index As Long
+    Dim References As Variant
+    
+    ReferenceLength = VBProj.References.Count
+    If ReferenceLength = 0 Then
+        ListProjectReferences = Array()
+        Exit Function
+    End If
+    
+    References = Array()
+    ReDim References(1 To ReferenceLength)
+    For Index = 1 To VBProj.References.Count
+        Set References(Index) = VBProj.References.Item(Index)
+    Next
+    
+    ReDim Preserve References(0 To ReferenceLength - 1)
+    ListProjectReferenceObjects = References
+End Function
+
+'# Checks if the refrence exists for a workbook given its name
+Public Function HasReference(ReferenceName As String, Book As Workbook) As Boolean
+On Error Resume Next
+    HasReference = False
+    HasReference = Not Book.VBProject.References(ReferenceName) Is Nothing
+    Err.Clear
 End Function
