@@ -3,7 +3,7 @@ Attribute VB_Name = "ChipInit"
 'Configurations
 '===========================
 '# This HTTP URL is where the Chip Workbook is stored
-Private Const REPO_URL As String = "https://github.com/FrancisMurillo/chip/raw/0.1-poc/chip-RELEASE.xlsm"
+Private Const REPO_URL As String = "http://github.com/FrancisMurillo/chip/raw/0.1-poc/chip-RELEASE.xlsm"
 Private Const DEPENDENCY_LIST As String = "Microsoft Visual Basic for Applications Extensibility *;Microsoft Scripting Runtime"
 Private Const LIST_DELIMITER As String = ";"
 
@@ -16,6 +16,8 @@ Private Const LIST_DELIMITER As String = ";"
 '# and copying the required modules
 Public Sub InstallChipFromRepo()
 On Error GoTo ErrHandler
+    ClearScreen
+
     Debug.Print "Install Chip From Repository"
     Debug.Print "=============================="
     
@@ -25,7 +27,6 @@ On Error GoTo ErrHandler
     
     Debug.Print "Installing Chip"
     InstallChip Path ' Install Chip
-    
     
     Debug.Print "Installation success"
 Cleanup:
@@ -37,12 +38,13 @@ Cleanup:
 ErrHandler:
     Debug.Print _
         "Whoops! There was an error in loading the file. " & _
-        "Make sure you selected the URL is correctly pointed to a Chip workbook."
+        "Make sure you selected the URL is correctly pointed to a Chip workbook and that you have an connection."
     Resume Cleanup
 End Sub
 
 Public Sub InstallChipLocally()
 On Error GoTo ErrHandler
+    ClearScreen
     Debug.Print "Install Chip Locally"
     Debug.Print "=============================="
 
@@ -74,6 +76,7 @@ End Sub
 '# The last core function
 '@ Exception: Propagate
 Private Sub InstallChip(ChipBookPath As String)
+    ' Check depedencies first, we are going to need those libraries to proceed.
     Dim Dependencies As Variant
     Dependencies = Split(DEPENDENCY_LIST, ";")
     Debug.Print "Checking dependencies"
@@ -81,16 +84,58 @@ Private Sub InstallChip(ChipBookPath As String)
         Debug.Print "One or more of the depedencies are not included. Make sure they are and installing again."
         Debug.Print "Required References:"
         For Each Depedency In Dependencies
-            Debug.Print "# " & Depedency
+            Debug.Print "** " & Depedency
         Next
-        Err.Raise 1001
+        Err.Raise Err.Number
     End If
+    
+    ' Get all the modules from the Chip workbook
+On Error GoTo ErrHandler:
+    Dim CurBook As Workbook, ChipBook As Workbook, CurProj As VBProject
+    Dim Modules As Variant, Module As Variant, TempPath As String, NewModule As VBComponent
+    Debug.Print "Opening Chip book"
+    Set CurBook = ActiveWorkbook
+    Set CurProj = CurBook.VBProject
+    Set ChipBook = Workbooks.Open(ChipBookPath, ReadOnly:=True)
+    
+    Debug.Print "Installing modules:"
+    Modules = ListWorkbookModules(ChipBook)
+    For Each Module In Modules ' Get all Chip* modules
+        If Module.Name Like "Chip*" Then
+            If Module.Name <> "ChipInit" Then ' Ignore this module
+                If DoesModuleExists(Module.Name) Then
+                    DeleteModule Module.Name
+                    'Debug.Print "+- " & Module.Name & "(Updated)"
+                Else
+                    'Debug.Print "++ " & Module.Name
+                End If
+            
+                TempPath = "~" & Format(Now(), "yyyymmddhhmmss") & "mod"
+                
+                Module.Export TempPath
+                Set NewModule = CurProj.VBComponents.Import(TempPath)
+                
+                DeleteFile TempPath
+            End If
+        End If
+    Next
+ErrHandler:
+    If Err.Number <> 0 Then
+        Debug.Print _
+            "Whoops! There was an error using the Chip book. " & _
+            "Make sure the conditions are good for opening a workbook"
+    End If
+CloseBook:
+    Debug.Print "Closing Chip book"
+    DoEvents
+    ChipBook.Close SaveChanges:=False
+    Exit Sub
 End Sub
 
 '# This checks if the VB Project has the required references to run the code
 '@ Param: Dependencies > A zero string array of dependencies
+'@ Exception: Propagate
 Public Function CheckDependencies(Dependencies As Variant) As Boolean
-On Error GoTo ErrHandler
     Dim References As Variant
     References = ListProjectReferences
         
@@ -107,7 +152,6 @@ On Error GoTo ErrHandler
         End If
     Next
     CheckDependencies = True
-ErrHandler:
 End Function
 
 
@@ -115,9 +159,45 @@ End Function
 'Helper Functions
 '===========================
 
+'# Clears the intermediate screen
+Public Sub ClearScreen()
+    Application.SendKeys "^g ^a {DEL}"
+End Sub
+
+'# Removes a module whether it exists or not
+'# Used in making sure there are no duplicate modules
+Public Sub DeleteModule(ModuleName As String)
+On Error Resume Next
+    Dim CurProj As VBProject, Module As VBComponent
+    Set CurProj = ActiveWorkbook.VBProject
+    Set Module = CurProj.VBComponents(ModuleName)
+    CurProj.VBComponents.Remove Module
+End Sub
+
+'# Checks if an module exists
+Public Function DoesModuleExists(ModuleName As String) As Boolean
+On Error Resume Next
+    DoesModuleExists = False
+    DoesModuleExists = Not ActiveWorkbook.VBProject.VBComponents(ModuleName) Is Nothing  ' This fails if the module does not exists thus defaulting to False
+End Function
+
+'# Lists the modules of an workbook
+'# Primarily used to get all Chip modules
+'@ Return: An array of VB Components
+Public Function ListWorkbookModules(Book As Workbook)
+    Dim Comp As VBComponent, Modules As Variant, Index As Long
+    Modules = Array()
+    ReDim Modules(0 To Book.VBProject.VBComponents.Count - 1)
+    For Each Comp In Book.VBProject.VBComponents
+        Set Modules(Index) = Comp
+        Index = Index + 1
+    Next
+    ListWorkbookModules = Modules
+End Function
+
+
 '# This browses a file using the Open File Dialog
 '# Primarily used to open a macro enabled file
-'@ Exception: Propagated
 '@ Return: The absolute path of the selected file, an "False" if none was selected
 Public Function BrowseFile() As String
     BrowseFile = Application.GetOpenFilename _
@@ -128,10 +208,8 @@ End Function
 '# This downloads a file from the internet using the HTTP GET method
 '# This is primarily used for downloading a binary file or the workbook repo needed
 '! Taken from a site, modified to my use
-'@ Exception: Propagated
 '@ Return: The absolute path of the downloaded file, if path was not provided else the path itself
 Public Function DownloadFile(Optional URL As String = REPO_URL, Optional Path As String = "")
-On Error GoTo ErrHandler:
     If Path = "" Then ' Create pseudo unique path
         Path = ActiveWorkbook.Path & Application.PathSeparator & "~" & Format(Now(), "yyyymmddhhmmss")
     End If
@@ -160,14 +238,11 @@ On Error GoTo ErrHandler:
     
     DownloadFile = Path
     Exit Function
-ErrHandler:
 End Function
 
 '# Deletes a file forcibly, it does not check whether it is a folder or the path does not exists
 '# This is used to delete a temp file whether it still exists or not
-'@ Exception: Propagated
 Public Sub DeleteFile(FilePath As String)
-On Error Resume Next
     With New FileSystemObject
         If .FileExists(FilePath) Then
             .DeleteFile FilePath
@@ -178,9 +253,7 @@ End Sub
 '# This returns an string array of the references used in this VBA Project
 '# The strings are the name of the references, not the filename or path
 '@ Return: A zero-based array of strings
-'@ Exception: Propagated
 Public Function ListProjectReferences() As Variant
-On Error Resume Next
     Dim VBProj As VBIDE.VBProject
     Set VBProj = Application.VBE.ActiveVBProject
     
