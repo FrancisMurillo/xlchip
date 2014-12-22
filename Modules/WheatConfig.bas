@@ -16,6 +16,6 @@ Public Const PROJECT_REPO As String = "chip-src"
 Public IGNORE_MODULE As Variant
 
 Public Sub InitializeVariables()
-    IGNORE_MODULE = Array("WheatLib", "Wheat")
+    IGNORE_MODULE = Array("WheatLib", "Wheat", "Sandbox")
 End Sub
 
