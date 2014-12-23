@@ -1,4 +1,7 @@
 Attribute VB_Name = "ChipInit"
+'' This module is to download or install all the Chip modules properly
+'' This is self-contained of all the functions needed to run everything
+
 '===========================
 'Configurations
 '===========================
