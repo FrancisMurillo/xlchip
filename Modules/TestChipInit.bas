@@ -1,5 +1,5 @@
 Attribute VB_Name = "TestChipInit"
-Public Sub TestInstallChip()
+Public Sub TestInstallAndUninstallChip()
 On Error GoTo Cleanup
     ' Testing install
     ' 1. Create a fake workbook
@@ -34,9 +34,14 @@ On Error GoTo Cleanup
     Application.Run NewBook.Name & "!ChipInit.InstallChip", SampleBookPath, False, False
     
     Dim ExpectedModules As Variant, ModuleName As Variant
-    ExpectedModules = Array("Chip", "ChipInit", "ChipList")
+    ExpectedModules = Array("Chip", "ChipList")
     For Each ModuleName In ExpectedModules
         Debug.Print HasModule(CStr(ModuleName), NewBook)
+    Next
+    
+    Application.Run NewBook.Name & "!ChipInit.RemoveChip", NewBook, False
+    For Each ModuleName In ExpectedModules
+        Debug.Print Not HasModule(CStr(ModuleName), NewBook)
     Next
     
 Cleanup:

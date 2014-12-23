@@ -71,9 +71,40 @@ ErrHandler:
         "Make sure you selected a Chip workbook."
 End Sub
 
+Public Sub UninstallChip()
+On Error GoTo ErrHandler
+    ClearScreen
+    Debug.Print "Uninstalling Chip"
+    Debug.Print "=============================="
+
+    RemoveChip ActiveWorkbook
+    
+    Debug.Print "Uninstallation success"
+    Exit Sub
+ErrHandler:
+    Debug.Print _
+        "Whoops! There was an error removing Chip " & _
+        "Try to remove the remaining Chip modules instead."
+End Sub
+
 '===========================
 'Internal Functions
 '===========================
+
+'# This removes all Chip* modules except this one
+Private Sub RemoveChip(ChipBook As Workbook, _
+        Optional Verbose As Boolean = True)
+    Dim CurProj As VBProject, Modules As Variant, Module As Variant
+    Set CurProj = ActiveWorkbook.VBProject
+    Modules = ListWorkbookModuleObjects(ChipBook)
+    If Verbose Then Debug.Print "Removing Chip Modules:"
+    For Each Module In Modules
+        If Module.Name Like "Chip*" And Module.Name <> "ChipInit" Then
+            If Verbose Then Debug.Print "-- " & Module.Name
+            CurProj.VBComponents.Remove Module
+        End If
+    Next
+End Sub
 
 '# This copies the modules from the Chip workbook
 '# The last core function
