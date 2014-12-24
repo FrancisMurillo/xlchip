@@ -1,4 +1,69 @@
 Attribute VB_Name = "ChipLib"
+Public gVerbose As Boolean ' Sets the debug print option
+
+'===========================
+'Internal Functions
+'===========================
+
+Public Sub AttachChip(ChipBookPath As String, _
+        Optional Verbose As Boolean = True)
+    gVerbose = Verbose ' Set global output flag
+    Dim ChipBook As Workbook, MyBook As Workbook
+    
+    WriteLine "Opening Chip Book"
+    Set MyBook = ActiveWorkbook
+    Set ChipBook = Workbooks.Open(ChipBookPath)
+    
+    WriteLine "Reading ChipInfo"
+    CopyModule "ChipInfo", ChipBook, MyBook
+    
+    Dim ChipReferences As Variant, ChipModules As Variant
+    
+    
+    
+End Sub
+
+
+'===========================
+' Helper Functions
+' Taken from ChipLib, now more comprehensive
+'===========================
+
+'# Copies one module from one book to the other
+Public Sub CopyModule(ModuleName As String, SourceBook As Workbook, TargetBook As Workbook, _
+            Optional ShouldOverwrite As Boolean = True)
+    If Not HasModule(ModuleName, SourceBook) Then
+        Err.Raise 10001, _
+            Description:=SourceBook.Name & " does not have the module " & ModuleName
+    End If
+    
+    Dim Module As VBComponent, ModulePath As String
+    Set Module = SourceBook.VBProject.VBComponents(ModuleName)
+    ModulePath = CreateUniqueModulePath()
+    
+    Module.Export ModulePath
+    
+    If Not ShouldOverwrite And HasModule(ModuleName, TargetBook) Then
+        Err.Raise 10002, _
+            Description:=TargetBook.Name & " already has the module " & ModuleName
+    Else
+        DeleteModule ModuleName, SourceBook
+    End If
+    
+    TargetBook.VBProject.VBComponents.Import ModulePath
+    DeleteFile ModulePath
+End Sub
+
+'# Creates a pseudo unique path for the exporting modules
+Public Function CreateUniqueModulePath() As String
+    CreateUniqueModulePath = "~" & Format(Now(), "yyyymmddhhmmss") & "tmp"
+End Function
+
+'# Writes to the standard output when the verbose option is set
+Public Sub WriteLine(LineMsg As String)
+    If gVerbose Then Debug.Print LineMsg
+End Sub
+
 
 '# Clears the intermediate screen
 Public Sub ClearScreen()
@@ -40,19 +105,17 @@ Public Function ListWorkbookModuleObjects(Book As Workbook) As Variant
 End Function
 
 '# This browses a file using the Open File Dialog
-'# Primarily used to open a macro enabled file
-'@ Return: The absolute path of the selected file, an "False" if none was selected
+'@ Return: The absolute path of the selected file, an empty string if none was selected
 Public Function BrowseFile() As String
     BrowseFile = Application.GetOpenFilename _
     (Title:="Please choose a file to open", _
         FileFilter:="Excel Macro Enabled Files *.xlsm (*.xlsm),")
+    BrowseFile = IIf(BrowseFile = "False", "", BrowseFile) ' This is to normalize the result
 End Function
 
 '# This downloads a file from the internet using the HTTP GET method
-'# This is primarily used for downloading a binary file or the workbook repo needed
-'! Taken from a site, modified to my use
 '@ Return: The absolute path of the downloaded file, if path was not provided else the path itself
-Public Function DownloadFile(Optional URL As String = REPO_URL, Optional Path As String = "")
+Public Function DownloadFile(URL As String, Optional Path As String = "")
     If Path = "" Then ' Create pseudo unique path
         Path = ActiveWorkbook.Path & Application.PathSeparator & "~" & Format(Now(), "yyyymmddhhmmss")
     End If

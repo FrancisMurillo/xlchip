@@ -45,6 +45,7 @@ ErrHandler:
     Resume Cleanup
 End Sub
 
+'# Installs Chip via browse dialog, if the person has the book saved then it makes it easier.
 Public Sub InstallChipLocally()
 On Error GoTo ErrHandler
     ClearScreen
@@ -71,6 +72,7 @@ ErrHandler:
         "Make sure you selected a Chip workbook."
 End Sub
 
+'# Removes Chip from the workbook
 Public Sub UninstallChip()
 On Error GoTo ErrHandler
     ClearScreen
