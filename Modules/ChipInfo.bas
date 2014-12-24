@@ -1,11 +1,7 @@
 Attribute VB_Name = "ChipInfo"
-Private Reference As Variant
-Private Modules As Variant
-
-Public Sub Initialize()
-    Reference = Array( _
-        "Microsoft Visual Basic for Applications Extensibility *", _
-        "Microsoft Scripting Runtime")
-    Modules = Array( _
-        "Chip", "ChipLib", "ChipList")
+Public Sub WriteInfo()
+    ChipReadInfo.References = Array( _
+        "Microsoft Visual Basic for Applications Extensibility *")
+    ChipReadInfo.Modules = Array( _
+        "Vase", "VaseLib", "VaseAssert", "VaseConfig")
 End Sub

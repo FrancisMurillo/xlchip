@@ -9,18 +9,56 @@ Public Sub AttachChip(ChipBookPath As String, _
         Optional Verbose As Boolean = True)
     gVerbose = Verbose ' Set global output flag
     Dim ChipBook As Workbook, MyBook As Workbook
+    Dim ProjectReferences As Variant
+    ProjectReferences = ChipLib.ListProjectReferences
     
+On Error GoTo Cleanup
     WriteLine "Opening Chip Book"
     Set MyBook = ActiveWorkbook
     Set ChipBook = Workbooks.Open(ChipBookPath)
-    
+
     WriteLine "Reading ChipInfo"
     CopyModule "ChipInfo", ChipBook, MyBook
     
-    Dim ChipReferences As Variant, ChipModules As Variant
+    ChipReadInfo.ClearInfo
+    Application.Run MyBook.Name & "!ChipInfo.WriteInfo"
     
+    WriteLine "Checking depedencies"
+    Dim ChipReference As Variant, ReferencesSatisfied As Boolean
+    ReferencesSatisfied = True
+    For Each ChipReference In ChipReadInfo.References
+        If Not InLikeArr(ChipReference, ProjectReferences) Then
+            ReferencesSatisfied = False
+            Exit Sub
+        End If
+    Next
     
+    If Not ReferencesSatisfied Then
+        WriteLine "Chip references not satisfied. Include these references in the project and try again: "
+        For Each ChipReferene In ChipReadInfo.References
+            WriteLine "* " & ChipReference
+        Next
+    End If
     
+    WriteLine "Installing modules:"
+    Dim ChipModule As Variant
+    For Each ChipModule In ChipReadInfo.Modules
+        WriteLine "* " & ChipModule
+        CopyModule CStr(ChipModule), ChipBook, MyBook
+    Next
+Cleanup:
+On Error Resume Next
+    If Err.Number <> 0 Then
+        WriteLine _
+            "Whoops! An error occured with the Chip book." & _
+            "Check if the book is a certified Chip book and there are no residual modules installed."
+    End If
+    Err.Clear
+
+    WriteLine "Closing Chip book"
+    DoEvents
+    ChipBook.Close SaveChanges:=False
+    DoEvents
 End Sub
 
 
@@ -28,6 +66,17 @@ End Sub
 ' Helper Functions
 ' Taken from ChipLib, now more comprehensive
 '===========================
+
+'# Checks if a pattern matches any one in an array.
+'# Sort of InArr with a Like twist
+Public Function InLikeArr(Pattern As Variant, Arr As Variant) As Boolean
+    InLikeArr = False
+    Dim Elem As Variant
+    For Each Elem In Arr
+        InLikeArr = (Elem Like Pattern)
+        If InLikeArr Then Exit Function
+    Next
+End Function
 
 '# Copies one module from one book to the other
 Public Sub CopyModule(ModuleName As String, SourceBook As Workbook, TargetBook As Workbook, _
@@ -47,7 +96,7 @@ Public Sub CopyModule(ModuleName As String, SourceBook As Workbook, TargetBook A
         Err.Raise 10002, _
             Description:=TargetBook.Name & " already has the module " & ModuleName
     Else
-        DeleteModule ModuleName, SourceBook
+        DeleteModule ModuleName, TargetBook
     End If
     
     TargetBook.VBProject.VBComponents.Import ModulePath
@@ -68,6 +117,7 @@ End Sub
 '# Clears the intermediate screen
 Public Sub ClearScreen()
     Application.SendKeys "^g ^a {DEL}"
+    DoEvents
 End Sub
 
 '# Removes a module whether it exists or not
@@ -113,9 +163,17 @@ Public Function BrowseFile() As String
     BrowseFile = IIf(BrowseFile = "False", "", BrowseFile) ' This is to normalize the result
 End Function
 
+'# Checks if an file exists
+Public Function DoesFileExists(FilePath As String) As Boolean
+    With New FileSystemObject
+        DoesFileExists = .FileExists(FilePath)
+    End With
+End Function
+
 '# This downloads a file from the internet using the HTTP GET method
 '@ Return: The absolute path of the downloaded file, if path was not provided else the path itself
 Public Function DownloadFile(URL As String, Optional Path As String = "")
+On Error Resume Next
     If Path = "" Then ' Create pseudo unique path
         Path = ActiveWorkbook.Path & Application.PathSeparator & "~" & Format(Now(), "yyyymmddhhmmss")
     End If
@@ -125,12 +183,11 @@ Public Function DownloadFile(URL As String, Optional Path As String = "")
     Dim MyFile As String
     Dim WHTTP As Object
     
-    On Error Resume Next
-        Set WHTTP = CreateObject("WinHTTP.WinHTTPrequest.5")
-        If Err.Number <> 0 Then
-            Set WHTTP = CreateObject("WinHTTP.WinHTTPrequest.5.1")
-        End If
-    On Error GoTo 0
+    Set WHTTP = CreateObject("WinHTTP.WinHTTPrequest.5")
+    If Err.Number <> 0 Then
+        Set WHTTP = CreateObject("WinHTTP.WinHTTPrequest.5.1")
+    End If
+    Err.Clear
     
     WHTTP.Open "GET", URL, False
     WHTTP.Send
@@ -142,8 +199,10 @@ Public Function DownloadFile(URL As String, Optional Path As String = "")
         Put #FileNum, 1, FileData
     Close #FileNum
     
+    If Err.Number <> 0 Then Path = ""
+    Err.Clear
+    
     DownloadFile = Path
-    Exit Function
 End Function
 
 '# Deletes a file forcibly, it does not check whether it is a folder or the path does not exists

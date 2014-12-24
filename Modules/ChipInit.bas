@@ -6,9 +6,9 @@ Attribute VB_Name = "ChipInit"
 'Configurations
 '===========================
 '# This HTTP URL is where the Chip Workbook is stored
-Private Const REPO_URL As String = "http://github.com/FrancisMurillo/chip/raw/0.1-poc/chip-RELEASE.xlsm"
-Private Const DEPENDENCY_LIST As String = "Microsoft Visual Basic for Applications Extensibility *;Microsoft Scripting Runtime"
-Private Const LIST_DELIMITER As String = ";"
+Public Const REPO_URL As String = "http://github.com/FrancisMurillo/chip/raw/0.1-poc/chip-RELEASE.xlsm"
+Public Const DEPENDENCY_LIST As String = "Microsoft Visual Basic for Applications Extensibility *;Microsoft Scripting Runtime"
+Public Const LIST_DELIMITER As String = ";"
 
 
 '===========================

@@ -20,7 +20,7 @@ On Error GoTo Cleanup
     
     CurBook.VBProject.VBComponents("ChipInit").Export Path
     NewBook.VBProject.VBComponents.Import Path
-    DeleteFile Path
+    ChipInit.DeleteFile Path
     
     Dim Ref As Variant
     For Each Ref In References
@@ -36,12 +36,12 @@ On Error GoTo Cleanup
     Dim ExpectedModules As Variant, ModuleName As Variant
     ExpectedModules = Array("Chip", "ChipList")
     For Each ModuleName In ExpectedModules
-        Debug.Print HasModule(CStr(ModuleName), NewBook)
+        VaseAssert.AssertTrue ChipInit.HasModule(CStr(ModuleName), NewBook)
     Next
     
     Application.Run NewBook.Name & "!ChipInit.RemoveChip", NewBook, False
     For Each ModuleName In ExpectedModules
-        Debug.Print Not HasModule(CStr(ModuleName), NewBook)
+        VaseAssert.AssertFalse ChipInit.HasModule(CStr(ModuleName), NewBook)
     Next
     
 Cleanup:
@@ -57,7 +57,9 @@ End Sub
 
 Public Sub TestCheckDependency()
 On Error Resume Next
-    Debug.Print ChipInit.CheckDependencies
+    Dim Dependencies As Variant
+    Dependencies = Split(ChipInit.DEPENDENCY_LIST, ChipInit.LIST_DELIMITER)
+    VaseAssert.AssertTrue ChipInit.CheckDependencies(Dependencies)
 End Sub
 
 Public Sub TestBrowseFile()
