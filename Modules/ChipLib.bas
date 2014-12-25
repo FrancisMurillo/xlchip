@@ -9,7 +9,7 @@ Public Sub AttachChip(ChipBookPath As String, _
         Optional Verbose As Boolean = True)
     gVerbose = Verbose ' Set global output flag
     Dim ChipBook As Workbook, MyBook As Workbook
-    Dim ProjectReferences As Variant
+    Dim ProjectReferences As Variant, InfoModule As VBComponent
     ProjectReferences = ChipLib.ListProjectReferences
     
 On Error GoTo Cleanup
@@ -18,10 +18,10 @@ On Error GoTo Cleanup
     Set ChipBook = Workbooks.Open(ChipBookPath)
 
     WriteLine "Reading ChipInfo"
-    CopyModule "ChipInfo", ChipBook, MyBook
+    Set InfoModule = CopyModule("ChipInfo", ChipBook, MyBook, ShouldOverwrite:=False)
     
     ChipReadInfo.ClearInfo
-    Application.Run "'" & MyBook.Name & "'" & "!ChipInfo.WriteInfo"
+    Application.Run "'" & MyBook.Name & "'" & "!" & InfoModule.Name & ".WriteInfo"
     
     WriteLine "Checking depedencies"
     Dim ChipReference As Variant, ReferencesSatisfied As Boolean
@@ -32,7 +32,7 @@ On Error GoTo Cleanup
             Exit Sub
         End If
     Next
-    DeleteModule "ChipInfo", MyBook
+    DeleteModule InfoModule.Name, MyBook
     
     If Not ReferencesSatisfied Then
         WriteLine "Chip references not satisfied. Include these references in the project and try again: "
@@ -44,7 +44,11 @@ On Error GoTo Cleanup
     WriteLine "Installing modules:"
     Dim ChipModule As Variant
     For Each ChipModule In ChipReadInfo.Modules
-        WriteLine "* " & ChipModule
+        If Not ChipLib.HasModule(CStr(ChipModule), MyBook) Then
+            WriteLine "++ " & ChipModule
+        Else
+            WriteLine "+- " & ChipModule & "(Updated)"
+        End If
         CopyModule CStr(ChipModule), ChipBook, MyBook
     Next
 Cleanup:
@@ -80,7 +84,7 @@ Public Function InLikeArr(Pattern As Variant, Arr As Variant) As Boolean
 End Function
 
 '# Copies one module from one book to the other
-Public Sub CopyModule(ModuleName As String, SourceBook As Workbook, TargetBook As Workbook, _
+Public Function CopyModule(ModuleName As String, SourceBook As Workbook, TargetBook As Workbook, _
             Optional ShouldOverwrite As Boolean = True)
     If Not HasModule(ModuleName, SourceBook) Then
         Err.Raise 10001, _
@@ -94,15 +98,14 @@ Public Sub CopyModule(ModuleName As String, SourceBook As Workbook, TargetBook A
     Module.Export ModulePath
     
     If Not ShouldOverwrite And HasModule(ModuleName, TargetBook) Then
-        Err.Raise 10002, _
-            Description:=TargetBook.Name & " already has the module " & ModuleName
+        ' Do nothing, allow different name. The function result name must be used
     Else
         DeleteModule ModuleName, TargetBook
     End If
     
-    TargetBook.VBProject.VBComponents.Import ModulePath
+    Set CopyModule = TargetBook.VBProject.VBComponents.Import(ModulePath)
     DeleteFile ModulePath
-End Sub
+End Function
 
 '# Creates a pseudo unique path for the exporting modules
 Public Function CreateUniqueModulePath() As String
