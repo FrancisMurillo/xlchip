@@ -136,7 +136,7 @@ End Sub
 Public Function HasModule(ModuleName As String, Book As Workbook) As Boolean
 On Error Resume Next
     HasModule = False
-    HasModule = Not ActiveWorkbook.VBProject.VBComponents(ModuleName) Is Nothing  ' This fails if the module does not exists thus defaulting to False
+    HasModule = Not Book.VBProject.VBComponents(ModuleName) Is Nothing  ' This fails if the module does not exists thus defaulting to False
     Err.Clear
 End Function
 

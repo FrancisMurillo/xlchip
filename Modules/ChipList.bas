@@ -24,6 +24,8 @@ End Function
 
 '# Gets the names of the available chip repos
 Public Function ListChipNames() As Variant
+    ReloadRepositoryList
+
     Dim Chips As Variant, Index As Integer
     Chips = Array()
     ReDim Chips(0 To UBound(RepositoryList))

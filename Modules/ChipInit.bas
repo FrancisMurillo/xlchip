@@ -24,6 +24,9 @@ On Error GoTo ErrHandler
     Debug.Print "Install Chip From Repository"
     Debug.Print "=============================="
     
+    ' Check dependencies
+    If Not PrecheckDependencies Then Exit Sub
+    
     Dim Path As String
     Debug.Print "Downloading Chip from " & REPO_URL
     Path = DownloadFile ' Download file using the default settings
@@ -52,6 +55,9 @@ On Error GoTo ErrHandler
     Debug.Print "Install Chip Locally"
     Debug.Print "=============================="
 
+    ' Check dependencies
+    If Not PrecheckDependencies Then Exit Sub
+    
     Dim Path As String
     Debug.Print "Select a Chip workbook"
     Path = BrowseFile
@@ -93,6 +99,30 @@ End Sub
 'Internal Functions
 '===========================
 
+'# Checks if the workbook can execute the installation process
+Private Function PrecheckDependencies() As Boolean
+    PrecheckDependencies = True
+
+    If ActiveWorkbook.Path = "" Then
+        Debug.Print "Save the workbook first before installing modules."
+        PrecheckDependencies = False
+        
+        Exit Function
+    End If
+
+    Dim Dependencies As Variant
+    Dependencies = Split(DEPENDENCY_LIST, LIST_DELIMITER)
+    Debug.Print "Checking dependencies"
+    If Not CheckDependencies(Dependencies) Then
+        Debug.Print "One or more of the depedencies are not included. Make sure they are and installing again."
+        Debug.Print "Required References:"
+        For Each Depedency In Dependencies
+            Debug.Print "# " & Depedency
+        Next
+        PrecheckDependencies = False
+    End If
+End Function
+
 '# This removes all Chip* modules except this one
 Private Sub RemoveChip(ChipBook As Workbook, _
         Optional Verbose As Boolean = True)
@@ -112,25 +142,9 @@ End Sub
 '# The last core function
 '@ Exception: Propagate
 Private Sub InstallChip(ChipBookPath As String, _
-        Optional IgnoreDepedencyCheck As Boolean = False, _
         Optional Verbose As Boolean = True)
-    ' Check depedencies first, we are going to need those libraries to proceed.
-    Dim Dependencies As Variant
-    Dependencies = Split(DEPENDENCY_LIST, ";")
-    If Verbose Then Debug.Print "Checking dependencies"
-    If Not IgnoreDepedencyCheck And Not CheckDependencies(Dependencies) Then
-        If Verbose Then Debug.Print "One or more of the depedencies are not included. Make sure they are and installing again."
-        If Verbose Then Debug.Print "Required References:"
-        For Each Depedency In Dependencies
-            If Verbose Then Debug.Print "# " & Depedency
-        Next
-        Err.Raise Err.Number
-    Else
-        If Verbose Then Debug.Print "** Ignoring depedency check"
-    End If
-    
-    ' Get all the modules from the Chip workbook
 On Error GoTo ErrHandler:
+    ' Get all the modules from the Chip workbook
     Dim CurBook As Workbook, ChipBook As Workbook, CurProj As VBProject
     Dim Modules As Variant, Module As Variant, TempPath As String, NewModule As VBComponent
     If Verbose Then Debug.Print "Opening Chip book"
@@ -177,7 +191,7 @@ End Sub
 '@ Exception: Propagate
 Public Function CheckDependencies(Dependencies As Variant) As Boolean
     Dim References As Variant
-    References = ListProjectReferences
+    References = ListProjectReferences()
         
     Dim Depedency As Variant, Reference As Variant, IsFound As Boolean
     For Each Dependency In Dependencies
@@ -202,6 +216,7 @@ End Function
 '# Clears the intermediate screen
 Public Sub ClearScreen()
     Application.SendKeys "^g ^a {DEL}"
+    DoEvents
 End Sub
 
 '# Removes a module whether it exists or not
@@ -220,7 +235,7 @@ End Sub
 Public Function HasModule(ModuleName As String, Book As Workbook) As Boolean
 On Error Resume Next
     HasModule = False
-    HasModule = Not ActiveWorkbook.VBProject.VBComponents(ModuleName) Is Nothing  ' This fails if the module does not exists thus defaulting to False
+    HasModule = Not Book.VBProject.VBComponents(ModuleName) Is Nothing  ' This fails if the module does not exists thus defaulting to False
     Err.Clear
 End Function
 
@@ -296,13 +311,10 @@ End Sub
 '# The strings are the name of the references, not the filename or path
 '@ Return: A zero-based array of strings
 Public Function ListProjectReferences() As Variant
-    Dim VBProj As VBIDE.VBProject
-    Set VBProj = Application.VBE.ActiveVBProject
-    
     Dim ReferenceLength As Integer, Index As Long
     Dim References As Variant
     
-    ReferenceLength = VBProj.References.Count
+    ReferenceLength = ActiveWorkbook.VBProject.References.Count
     If ReferenceLength = 0 Then
         ListProjectReferences = Array()
         Exit Function
@@ -310,8 +322,8 @@ Public Function ListProjectReferences() As Variant
     
     References = Array()
     ReDim References(1 To ReferenceLength)
-    For Index = 1 To VBProj.References.Count
-        With VBProj.References.Item(Index)
+    For Index = 1 To ActiveWorkbook.VBProject.References.Count
+        With ActiveWorkbook.VBProject.References.Item(Index)
             References(Index) = .Description
         End With
     Next
