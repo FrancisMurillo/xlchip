@@ -32,6 +32,7 @@ On Error GoTo Cleanup
             Exit Sub
         End If
     Next
+    DeleteModule "ChipInfo", MyBook
     
     If Not ReferencesSatisfied Then
         WriteLine "Chip references not satisfied. Include these references in the project and try again: "

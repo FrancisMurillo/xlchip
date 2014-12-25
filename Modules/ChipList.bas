@@ -5,8 +5,8 @@ Public Sub ReloadRepositoryList()
     ' This is a list of tuples containing the following
     ' Chip Name, URL
     RepositoryList = Array( _
-          Array("Vase", "https://github.com/FrancisMurillo/vase/raw/0.1-poc/vase-RELEASE.xlsm") _
-        , Array("Wheat", "https://github.com/FrancisMurillo/wheat/raw/0.1-poc/wheat-RELEASE.xlsm") _
+          Array("Vase", "https://github.com/FrancisMurillo/vase/raw/master/vase-RELEASE.xlsm") _
+        , Array("Wheat", "https://github.com/FrancisMurillo/wheat/raw/master/wheat-RELEASE.xlsm") _
     )
 End Sub
 
