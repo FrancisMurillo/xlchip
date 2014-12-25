@@ -21,7 +21,7 @@ On Error GoTo Cleanup
     CopyModule "ChipInfo", ChipBook, MyBook
     
     ChipReadInfo.ClearInfo
-    Application.Run MyBook.Name & "!ChipInfo.WriteInfo"
+    Application.Run "'" & MyBook.Name & "'" & "!ChipInfo.WriteInfo"
     
     WriteLine "Checking depedencies"
     Dim ChipReference As Variant, ReferencesSatisfied As Boolean
