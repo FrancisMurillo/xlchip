@@ -48,8 +48,9 @@ That's pretty much it. After wading through the window outputs, you have those m
 chips
 ====
 These are the *chips* available at this time:
-* Vase 
+* Vase - A unittesting framework 
 * Wheat - A code export/import tool module
+* Butil - A bunch of utility modules
 
 To update the list, run the install procedure to refresh the repo list or you can just import the module <a href="https://raw.githubusercontent.com/FrancisMurillo/chip/master/Modules/ChipList.bas">ChipList.bas</a> if you want to be precise. 
 
