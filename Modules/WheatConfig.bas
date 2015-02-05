@@ -8,7 +8,7 @@ Attribute VB_Name = "WheatConfig"
 
 '# PROJECT REPO
 '# The name of the project folder, an absolute or relative path.
-Public Const PROJECT_REPO As String = "chip-src"
+Public Const PROJECT_REPO As String = "xlchip-src"
 
 '# EXPORT Options
 Public Const SHOW_EXPORTED_MODULES As Boolean = True
