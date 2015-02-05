@@ -15,7 +15,7 @@ Currently, I'm using this for VBA Excel development in my company since there is
 **To God I plant this seed, may it turn into a forest**
 
 quick start
-====
+-----------
 
 There's only one thing you need to import for your project: <a href="https://raw.githubusercontent.com/FrancisMurillo/xlchip/master/Modules/ChipInit.bas">ChipInit.bas</a>. You can create a new module and copy paste the code but importing the module is the most efficient way to go.
 
@@ -46,7 +46,7 @@ Chip.ChipOnFromRepo "Wheat"
 That's pretty much it. After wading through the window outputs, you have those modules installed. This is pretty much the workflow I had in mind. Want a *chip*? Just type in the name and it will download it for you.
 
 chips
-====
+-----
 These are the *chips* available at this time:
 * Vase(xlvase) - A unittesting framework 
 * Wheat(xlwheat) - A code export/import tool module
@@ -61,7 +61,7 @@ ChipInit.InstallChipFromRepo
 Although the list is small, it is a list. If there are more projects, I'll add to that. I do encourage you to turn your collection of VBA modules to a *chip* project so that people can install it easily. 
 
 chip project
-====
+------------
 
 The only requirement for this manager to read the project as a *chip* project is that it has the module *ChipInfo.bas*. This is where what the manager looks for and runs to get the configurations needed to import the project. This module must have a *Sub WriteInfo()*, as this will be executed by *Application.Run*. The implementation looks like this.
 
@@ -93,8 +93,8 @@ Chip.ChipOnLocally
 This will open the Browse Dialog. Open your *chip* from another workbook(assuming you set it up to with *Chip* as well), it will read the configuration and hopefully install the modules you want installed. Drop me a message where your is *chip* so I can add it to the list.
 
 
-chip project
-====
+chip commands
+-------------
 
 The list of important commands for this *Chip*. Majority of the workflow is already discussed above, anything else will require optional parameters or modifying the source code itself; you can read the method headers to get an idea how the routines are executed.
 
