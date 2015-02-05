@@ -1,10 +1,10 @@
-chip
+xlchip
 ====
 
 A VBA module manager that installs other related modules for you.
 
 When creating a VBA project, I find myself looking for two things: a testing framework and a code import/export tool.
-The latter being more important as I can setup a code management process for my VBA modules to a VCS such as Git or Mercurial. VB is forthcoming with these so I created <a href="https://github.com/FrancisMurillo/vase">vase</a> and <a href="https://github.com/FrancisMurillo/wheat">wheat</a> to respectively address the issue in some way. But installing the projects by importing the modules manually is such a chore, that's why this was born.
+The latter being more important as I can setup a code management process for my VBA modules to a VCS such as Git or Mercurial. VB is forthcoming with these so I created <a href="https://github.com/FrancisMurillo/xlvase">vase</a> and <a href="https://github.com/FrancisMurillo/xlwheat">wheat</a> to respectively address the issue in some way. But installing the projects by importing the modules manually is such a chore, that's why this was born.
 
 This module manager downloads the project files from the net and installs the modules specified by that project. However, this isn't a module namespace resolution tool and all that. This is just an import tool for the pragmatic VBA developer who just wants to install the modules to start working. 
 
@@ -17,7 +17,7 @@ Currently, I'm using this for VBA Excel development in my company since there is
 quick start
 ====
 
-There's only one thing you need to import for your project: <a href="https://raw.githubusercontent.com/FrancisMurillo/chip/master/Modules/ChipInit.bas">ChipInit.bas</a>. You can create a new module and copy paste the code but importing the module is the most efficient way to go.
+There's only one thing you need to import for your project: <a href="https://raw.githubusercontent.com/FrancisMurillo/xlchip/master/Modules/ChipInit.bas">ChipInit.bas</a>. You can create a new module and copy paste the code but importing the module is the most efficient way to go.
 
 Also you need to include these references to your project before running any commands. These are:
 * Microsoft Scripting Runtime
@@ -48,11 +48,11 @@ That's pretty much it. After wading through the window outputs, you have those m
 chips
 ====
 These are the *chips* available at this time:
-* Vase - A unittesting framework 
-* Wheat - A code export/import tool module
-* Butil - A bunch of utility modules
+* Vase(xlvase) - A unittesting framework 
+* Wheat(xlwheat) - A code export/import tool module
+* Butil(xlbutil) - A bunch of utility modules
 
-To update the list, run the install procedure to refresh the repo list or you can just import the module <a href="https://raw.githubusercontent.com/FrancisMurillo/chip/master/Modules/ChipList.bas">ChipList.bas</a> if you want to be precise. 
+To update the list, run the install procedure to refresh the repo list or you can just import the module <a href="https://raw.githubusercontent.com/FrancisMurillo/xlchip/master/Modules/ChipList.bas">ChipList.bas</a> if you want to be precise. 
 
 ```
 ChipInit.InstallChipFromRepo
