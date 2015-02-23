@@ -8,6 +8,7 @@ Public Sub ReloadRepositoryList()
           Array("Vase", "https://github.com/FrancisMurillo/xlvase/raw/master/xlvase-RELEASE.xlsm") _
         , Array("Wheat", "https://github.com/FrancisMurillo/xlwheat/raw/master/xlwheat-RELEASE.xlsm") _
         , Array("Butil", "https://github.com/FrancisMurillo/xlbutil/raw/master/xlbutil-RELEASE.xlsm") _
+        , Array("Fn", "https://github.com/FrancisMurillo/xlfn/raw/master/xlfn-RELEASE.xlsm") _
     )
 End Sub
 
