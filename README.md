@@ -51,6 +51,7 @@ These are the *chips* available at this time:
 * Vase(xlvase) - A unittesting framework 
 * Wheat(xlwheat) - A code export/import tool module
 * Butil(xlbutil) - A bunch of utility modules
+* Fn(xlfn) - A pseudo functional programmming library
 
 To update the list, run the install procedure to refresh the repo list or you can just import the module <a href="https://raw.githubusercontent.com/FrancisMurillo/xlchip/master/Modules/ChipList.bas">ChipList.bas</a> if you want to be precise. 
 
