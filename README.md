@@ -22,6 +22,7 @@ There's only one thing you need to import for your project: <a href="https://raw
 Also you need to include these references to your project before running any commands. These are:
 * Microsoft Scripting Runtime
 * Microsoft Visual Basic for Applications Extensibility 5.*(The version hasn't been tested but works with 5.3)
+** Also make sure you enable *Trust Access to the VBA project object model* to allow this reference to work. This can be found in the *Trust Center* under *Macro Settings*
 
 If you don't have them, I suggest installing them as my favorite repos have that as their dependency as well.
 
